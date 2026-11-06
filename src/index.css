@@ -1,9 +1,21 @@
-@import "tailwindcss";
+/* src/index.css */
 @import "tailwindcss";
 
 :root {
-  --brand: #4f46e5;
+  --brand: #ff5100;
   --brand-fg: #ffffff;
+  --bg-main: #f5f2eb;
+  --bg-card: #ffffff;
+  --bg-dark: #1b2333;
+  --text-main: #111111;
+  --text-muted: #666666;
+  --text-dark: #ffffff;
+}
+
+/* 👇 AGREGA ESTA LÍNEA PARA EL SCROLL SUAVE */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 100px; /* Para que el header fijo no tape el título al scrollear */
 }
 
 html,
@@ -19,8 +31,8 @@ body {
     -apple-system,
     sans-serif;
   -webkit-font-smoothing: antialiased;
-  background-color: #f8fafc;
-  color: #0f172a;
+  background-color: var(--bg-main);
+  color: var(--text-main);
 }
 
 .bg-brand {
@@ -29,9 +41,15 @@ body {
 .text-brand {
   color: var(--brand);
 }
-.border-brand {
-  border-color: var(--brand);
+.bg-main {
+  background-color: var(--bg-main);
 }
-.ring-brand {
-  --tw-ring-color: var(--brand);
+.bg-dark {
+  background-color: var(--bg-dark);
+}
+.text-dark {
+  color: var(--text-dark);
+}
+.text-muted {
+  color: var(--text-muted);
 }

@@ -1,166 +1,159 @@
 import { useState, useEffect } from "react";
-import { NavLink, Outlet, useParams } from "react-router-dom";
-import {
-  Calendar,
-  ShoppingBag,
-  User,
-  MapPin,
-  GraduationCap,
-  Smartphone,
-  ChevronLeft,
-  ChevronRight,
-  Loader2,
-} from "lucide-react";
+import { NavLink, Outlet, useParams, useLocation } from "react-router-dom";
+import { Loader2, Menu, X } from "lucide-react";
 import { useBusinessStore } from "../../store/useBusinessStore";
 import { applyBrandPalette } from "../../utils/palettes";
 import {
   CustomerAuthProvider,
   useCustomerAuth,
 } from "./auth/CustomerAuthContext";
-// 👇 VOLVEMOS A IMPORTAR EL BOOKING PROVIDER
 import { BookingProvider } from "./context/BookingContext";
 import { BookingsProvider } from "./context/BookingsContext";
 import { PointsProvider } from "./context/PointsContext";
 import { ReviewsProvider } from "./context/ReviewsContext";
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
+
 function LayoutInner({ business }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const [animateIn, setAnimateIn] = useState(false);
   const { customer } = useCustomerAuth();
-  const [page, setPage] = useState(0);
+  const location = useLocation();
 
-  const navItem = ({ isActive }) =>
-    `flex items-center gap-2 text-sm px-3 py-2 rounded-xl transition
-     ${isActive ? "bg-slate-100 text-slate-900" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"}`;
+  // Cierra el menú automáticamente si cambia la ruta
+  useEffect(() => {
+    setIsOpen(false);
+  }, [location.pathname]);
 
-  const mobileItem = ({ isActive }) =>
-    `flex flex-col items-center justify-center gap-1 py-3 text-[11px] w-full ${isActive ? "text-brand" : "text-slate-500"}`;
-
-  const showExtras =
-    business.address || business.modules?.courses || business.modules?.app;
+  useEffect(() => {
+    if (isOpen) {
+      setIsMounted(true);
+      const raf = requestAnimationFrame(() => {
+        setTimeout(() => setAnimateIn(true), 20);
+      });
+      return () => cancelAnimationFrame(raf);
+    } else {
+      setAnimateIn(false);
+      const timer = setTimeout(() => setIsMounted(false), 600);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="bg-white/80 backdrop-blur border-b border-slate-100 sticky top-0 z-20">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
-          <img
-            src={
-              business.visual?.logoUrl || "https://placehold.co/80x80?text=Logo"
-            }
-            alt={business.name}
-            className="w-9 h-9 rounded-full object-cover ring-1 ring-slate-200"
-          />
-          <div className="flex-1 min-w-0">
-            <h1 className="text-sm font-semibold text-slate-900 truncate">
-              {business.name}
-            </h1>
-            <p className="text-[11px] text-slate-500 truncate">
-              {business.category}
-            </p>
-          </div>
+    <div className="min-h-screen flex flex-col bg-main">
+      <header className="w-full px-6 py-5 flex items-center justify-between max-w-7xl mx-auto relative z-50">
+        {/* LOGO: Lleva al inicio del negocio */}
+        <NavLink
+          to={`/${business.slug}`}
+          className="flex items-baseline gap-2"
+          onClick={() => setIsOpen(false)}
+        >
+          <span className="text-3xl font-black tracking-tighter text-slate-900 uppercase">
+            {business.name}
+          </span>
+          <span className="text-sm font-medium text-slate-500 hidden sm:block">
+            {business.category}
+          </span>
+        </NavLink>
 
-          <nav className="hidden sm:flex items-center gap-1">
-            <NavLink to={`/${business.slug}`} end className={navItem}>
-              <Calendar size={16} /> Turnos
-            </NavLink>
-            {business.modules?.products && (
-              <NavLink to={`/${business.slug}/productos`} className={navItem}>
-                <ShoppingBag size={16} /> Productos
-              </NavLink>
-            )}
-            {business.address && (
-              <NavLink
-                to={`/${business.slug}/donde-estamos`}
-                className={navItem}
-              >
-                <MapPin size={16} /> Ubicación
-              </NavLink>
-            )}
-            {business.modules?.courses && (
-              <NavLink to={`/${business.slug}/cursos`} className={navItem}>
-                <GraduationCap size={16} /> Cursos
-              </NavLink>
-            )}
-            {business.modules?.app && (
-              <NavLink to={`/${business.slug}/nuestra-app`} className={navItem}>
-                <Smartphone size={16} /> App
-              </NavLink>
-            )}
-            <NavLink to={`/${business.slug}/perfil`} className={navItem}>
-              <User size={16} /> {customer ? "Mi perfil" : "Ingresar"}
-            </NavLink>
-          </nav>
-        </div>
+        {/* Desktop Nav */}
+        <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-800">
+          {/* Si ya está en el inicio, scrollea suave. Si no, navega al inicio. */}
+          <NavLink
+            to={`/${business.slug}`}
+            className="hover:text-brand transition"
+          >
+            Servicios
+          </NavLink>
+          <NavLink
+            to={`/${business.slug}`}
+            className="hover:text-brand transition"
+          >
+            Horarios
+          </NavLink>
+          <NavLink
+            to={`/${business.slug}`}
+            className="hover:text-brand transition"
+          >
+            Contacto
+          </NavLink>
+          <NavLink
+            to={`/${business.slug}/perfil`}
+            className="bg-slate-900 text-white px-5 py-2.5 rounded-full hover:bg-slate-800 transition shadow-sm"
+          >
+            {customer ? "Mi perfil" : "Reservar"}
+          </NavLink>
+        </nav>
+
+        <button
+          className="md:hidden p-2 -mr-2 text-slate-900 focus:outline-none transition-transform active:scale-95"
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          {isOpen ? <X size={28} /> : <Menu size={28} />}
+        </button>
       </header>
 
-      <main className="flex-1">
-        <div className="max-w-5xl mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
-          <Outlet />
+      {/* Menú Mobile Animado */}
+      {isMounted && (
+        <div
+          className={`fixed inset-0 z-40 md:hidden bg-slate-900/40 backdrop-blur-sm transition-opacity duration-500 ease-in-out ${
+            animateIn ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
+          onClick={() => setIsOpen(false)}
+        >
+          <div
+            className={`absolute top-0 left-0 right-0 bg-white shadow-2xl rounded-b-[2rem] pt-24 pb-10 px-6 flex flex-col gap-2 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+              animateIn
+                ? "translate-y-0 opacity-100"
+                : "-translate-y-full opacity-0"
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <NavLink
+              to={`/${business.slug}`}
+              className="text-xl font-bold text-slate-800 border-b border-slate-100 py-4"
+            >
+              Servicios
+            </NavLink>
+            <NavLink
+              to={`/${business.slug}`}
+              className="text-xl font-bold text-slate-800 border-b border-slate-100 py-4"
+            >
+              Horarios
+            </NavLink>
+            <NavLink
+              to={`/${business.slug}`}
+              className="text-xl font-bold text-slate-800 border-b border-slate-100 py-4"
+            >
+              Contacto
+            </NavLink>
+            <NavLink
+              to={`/${business.slug}/perfil`}
+              className="mt-6 bg-brand text-white font-bold text-center px-6 py-4 rounded-full shadow-lg text-lg hover:opacity-90 transition"
+            >
+              {customer ? "Mi perfil" : "Reservar turno"}
+            </NavLink>
+          </div>
         </div>
+      )}
+
+      <main className="flex-1 w-full relative z-10">
+        <Outlet />
       </main>
 
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 z-20 overflow-hidden">
-        <div
-          className="flex transition-transform duration-300 ease-out"
-          style={{ width: "200%", transform: `translateX(-${page * 50}%)` }}
-        >
-          <div className="w-1/2 grid grid-cols-4 items-stretch">
-            <NavLink to={`/${business.slug}`} end className={mobileItem}>
-              <Calendar size={18} /> Turnos
-            </NavLink>
-            {business.modules?.products && (
-              <NavLink
-                to={`/${business.slug}/productos`}
-                className={mobileItem}
-              >
-                <ShoppingBag size={18} /> Productos
-              </NavLink>
-            )}
-            <NavLink to={`/${business.slug}/perfil`} className={mobileItem}>
-              <User size={18} /> {customer ? "Perfil" : "Ingresar"}
-            </NavLink>
-            {showExtras ? (
-              <button
-                type="button"
-                onClick={() => setPage(1)}
-                className="flex flex-col items-center justify-center gap-1 py-3 text-[11px] text-slate-500 w-full"
-              >
-                <ChevronLeft size={18} className="text-brand" /> Más
-              </button>
-            ) : (
-              <div />
-            )}
-          </div>
-          <div className="w-1/2 grid grid-cols-4 items-stretch">
-            <button
-              type="button"
-              onClick={() => setPage(0)}
-              className="flex flex-col items-center justify-center gap-1 py-3 text-[11px] text-slate-500 w-full"
-            >
-              <ChevronRight size={18} className="text-brand" /> Volver
-            </button>
-            {business.address && (
-              <NavLink
-                to={`/${business.slug}/donde-estamos`}
-                className={mobileItem}
-              >
-                <MapPin size={18} /> Ubicación
-              </NavLink>
-            )}
-            {business.modules?.courses && (
-              <NavLink to={`/${business.slug}/cursos`} className={mobileItem}>
-                <GraduationCap size={18} /> Cursos
-              </NavLink>
-            )}
-            {business.modules?.app && (
-              <NavLink
-                to={`/${business.slug}/nuestra-app`}
-                className={mobileItem}
-              >
-                <Smartphone size={18} /> App
-              </NavLink>
-            )}
-          </div>
-        </div>
-      </nav>
+      <footer className="w-full max-w-7xl mx-auto px-6 py-10 mt-20 border-t border-slate-300 flex justify-between items-center text-sm text-slate-500">
+        <span className="font-bold text-slate-900">{business.name}</span>
+        <span>
+          © {new Date().getFullYear()} {business.name}
+        </span>
+      </footer>
     </div>
   );
 }
@@ -181,7 +174,7 @@ export default function BookingLayout() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-main">
         <Loader2 className="animate-spin text-brand" size={32} />
       </div>
     );
@@ -189,12 +182,12 @@ export default function BookingLayout() {
 
   if (error || !business) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-6 text-center">
+      <div className="min-h-screen flex items-center justify-center px-6 text-center bg-main">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">
+          <h2 className="text-2xl font-bold text-slate-900">
             Negocio no encontrado
           </h2>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-slate-500 mt-2">
             {error || `No existe un negocio con la URL "${slug}".`}
           </p>
         </div>
@@ -207,8 +200,8 @@ export default function BookingLayout() {
       <BookingsProvider>
         <PointsProvider>
           <ReviewsProvider slug={slug}>
-            {/* 👇 ACÁ ESTÁ EL PROVIDER QUE FALTABA */}
             <BookingProvider slug={slug}>
+              <ScrollToTop />
               <LayoutInner business={business} />
             </BookingProvider>
           </ReviewsProvider>
@@ -217,4 +210,3 @@ export default function BookingLayout() {
     </CustomerAuthProvider>
   );
 }
- 

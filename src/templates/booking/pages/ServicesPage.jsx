@@ -1,21 +1,11 @@
 import { useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Search, X, Loader2 } from "lucide-react";
+import { Loader2, MapPin } from "lucide-react";
 import { useBusinessStore } from "../../../store/useBusinessStore";
-import { useBooking } from "../context/BookingContext"; // Lo dejamos por ahora para la selección
+import { useBooking } from "../context/BookingContext";
 import { useCustomerAuth } from "../auth/CustomerAuthContext";
 import ServiceCategoryGroup from "../components/ServiceCategoryGroup";
-import EmptyState from "../components/ui/EmptyState";
-import Button from "../components/ui/Button";
 
-function normalize(str) {
-  return (str || "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-}
-
-// Función auxiliar para agrupar (como los servicios vienen planos del back, los agrupamos acá)
 function groupServices(services) {
   const groups = new Map();
   for (const s of services) {
@@ -23,75 +13,32 @@ function groupServices(services) {
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(s);
   }
-  return Array.from(groups.entries()).sort(([a], [b]) => {
-    if (a === "Otros") return 1;
-    if (b === "Otros") return -1;
-    return a.localeCompare(b);
-  });
+  return Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b));
 }
 
 export default function ServicesPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
-
-  // 🔥 Traemos los datos del Store global
   const { business, services, loading } = useBusinessStore();
-
   const { setService } = useBooking();
   const { customer } = useCustomerAuth();
-
-  const [query, setQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState("Todas");
-  const [openCategory, setOpenCategory] = useState(null);
 
   const groupedServices = useMemo(
     () => groupServices(services || []),
     [services],
   );
-  const allCategories = useMemo(
-    () => groupedServices.map(([cat]) => cat),
-    [groupedServices],
-  );
-
-  const filteredGrouped = useMemo(() => {
-    const q = normalize(query.trim());
-
-    return groupedServices
-      .map(([category, items]) => {
-        if (activeCategory !== "Todas" && category !== activeCategory)
-          return [category, []];
-
-        const matches = items.filter((s) => {
-          if (!q) return true;
-          return (
-            normalize(s.name).includes(q) ||
-            normalize(s.description).includes(q)
-          );
-        });
-        return [category, matches];
-      })
-      .filter(([, items]) => items.length > 0);
-  }, [groupedServices, query, activeCategory]);
-
-  const isFiltering = query.trim().length > 0 || activeCategory !== "Todas";
-  const totalResults = filteredGrouped.reduce(
-    (acc, [, s]) => acc + s.length,
-    0,
-  );
 
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
+      <div className="flex justify-center py-20">
         <Loader2 className="animate-spin text-brand" />
       </div>
     );
   }
 
   const handleServicePick = (service) => {
-    // El backend nos dice si pide seña en el objeto del negocio
     const requiresDeposit = business?.depositMode !== "none";
     const depositAmount = requiresDeposit ? business.depositValue : 0;
-
     setService(service.id, requiresDeposit, depositAmount);
 
     if (!customer) {
@@ -101,128 +48,150 @@ export default function ServicesPage() {
     }
   };
 
-  const clearFilters = () => {
-    setQuery("");
-    setActiveCategory("Todas");
-  };
+  const heroBg =
+    business.visual?.coverImageUrl ||
+    "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?q=80&w=2000&auto=format&fit=crop";
+  const initial = business.name.charAt(0).toUpperCase();
 
   return (
-    <div>
-      <header className="mb-4">
-        <h2 className="text-xl sm:text-2xl font-semibold text-slate-900">
-          Elegí un servicio
-        </h2>
-        <p className="text-sm text-slate-500 mt-1">
-          Seleccioná lo que necesitás y avanzá con el turno.
-        </p>
-      </header>
-
-      {services.length === 0 ? (
-        <EmptyState
-          title="Sin servicios disponibles"
-          description="Este negocio todavía no cargó servicios."
+    <div className="bg-main pb-20">
+      {/* 1. BANNER DE FONDO */}
+      <div className="w-full h-[30vh] min-h-[200px] max-h-[250px] relative">
+        <img
+          src={heroBg}
+          alt="Portada"
+          className="w-full h-full object-cover object-center"
         />
-      ) : (
-        <>
-          <div className="relative mb-3">
-            <Search
-              size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-            />
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar servicio…"
-              className="w-full pl-9 pr-9 py-3 rounded-2xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition"
-            />
-            {query && (
-              <button
-                type="button"
-                onClick={() => setQuery("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
-              >
-                <X size={14} />
-              </button>
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-main)] via-transparent to-transparent opacity-80"></div>
+      </div>
+
+      <div className="max-w-5xl mx-auto px-6">
+        {/* 2. INFO DEL LOCAL (Ajustes PC) */}
+        <div className="relative -mt-20 sm:-mt-28 md:-mt-20 lg:-mt-24 mb-6 flex flex-col sm:flex-row items-start sm:items-center gap-5 sm:gap-6">
+          <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-[var(--bg-main)] bg-white shadow-md flex items-center justify-center shrink-0 overflow-hidden">
+            {business.visual?.logoUrl ? (
+              <img
+                src={business.visual.logoUrl}
+                alt="Logo"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="text-4xl font-black text-brand">{initial}</span>
             )}
           </div>
 
-          {allCategories.length >= 2 && (
-            <div className="flex gap-2 overflow-x-auto pb-2 mb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
-              <CategoryChip
-                label="Todas"
-                active={activeCategory === "Todas"}
-                onClick={() => setActiveCategory("Todas")}
-              />
-              {allCategories.map((cat) => (
-                <CategoryChip
-                  key={cat}
-                  label={cat}
-                  active={activeCategory === cat}
-                  onClick={() => setActiveCategory(cat)}
-                />
-              ))}
+          <div className="mt-0 sm:mt-6">
+            {/* 👇 TÍTULO NEGRO PURO EN PC */}
+            <h1 className="text-3xl sm:text-5xl font-black text-slate-900 md:text-black tracking-tight mb-1">
+              {business.name}
+            </h1>
+            <div className="flex items-center gap-2 text-sm sm:text-base font-medium text-slate-500">
+              <MapPin size={18} className="text-brand" />
+              <span>Dirección no especificada</span>
             </div>
-          )}
+          </div>
+        </div>
+      </div>
 
-          {isFiltering && (
-            <div className="flex items-center justify-between mb-3 text-xs text-slate-500">
-              <span>
-                {totalResults} {totalResults === 1 ? "resultado" : "resultados"}{" "}
-                {query && <> para "{query}"</>}
-              </span>
+      {/* 3. SECCIÓN DE SERVICIOS (Ajustes PC) */}
+      {/* 👇 EN PC BAJAMOS LA SECCIÓN (md:mt-12) Y ACHICAMOS EL TÍTULO (md:text-6xl) */}
+      <section
+        id="servicios"
+        className="max-w-7xl mx-auto px-6 pt-0 pb-10 mb-10 md:mt-12"
+      >
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 text-left">
+          <h2 className="text-5xl sm:text-7xl md:text-6xl font-black tracking-tighter text-slate-900 leading-none">
+            Servicios
+            <br />y precios
+          </h2>
+          <p className="text-slate-500 max-w-[250px] text-sm mt-4 md:mt-0 text-left">
+            Tocá "Reservar" en el servicio que quieras y elegí día y horario.
+          </p>
+        </div>
+
+        {services.length === 0 ? (
+          <div className="text-center py-20 text-slate-500">
+            Este negocio no tiene servicios cargados.
+          </div>
+        ) : (
+          <div>
+            {groupedServices.map(([category, items]) => (
+              <ServiceCategoryGroup
+                key={category}
+                slug={slug}
+                category={category}
+                services={items}
+                open={true}
+                onToggle={() => {}}
+                onServicePick={handleServicePick}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* 4. CONTACTO */}
+      <section id="contacto" className="max-w-7xl mx-auto px-6 py-20">
+        <div className="bg-white rounded-3xl p-8 sm:p-16 flex flex-col lg:flex-row gap-12 border border-slate-200 shadow-sm">
+          <div className="flex-1">
+            <h2 className="text-4xl sm:text-6xl font-black tracking-tight mb-8 text-slate-900">
+              Contacto
+            </h2>
+            <p className="text-2xl sm:text-4xl font-bold mb-8 text-slate-800">
+              {business.supportPhone || "+54 9 11 0000-0000"}
+            </p>
+
+            <div className="flex gap-3 mb-10">
               <button
-                onClick={clearFilters}
-                className="font-medium text-brand hover:underline"
+                type="button"
+                className="bg-brand text-white px-6 py-2 rounded-full font-bold flex items-center gap-2 hover:opacity-90 transition"
               >
-                Limpiar filtros
+                WhatsApp
+              </button>
+              <button
+                type="button"
+                className="border border-slate-300 text-slate-700 px-6 py-2 rounded-full font-bold flex items-center gap-2 hover:bg-slate-50 transition"
+              >
+                Llamar
               </button>
             </div>
-          )}
 
-          {filteredGrouped.length === 0 ? (
-            <EmptyState
-              title="Sin resultados"
-              description="No encontramos servicios que coincidan con tu búsqueda."
-              action={
-                <Button onClick={clearFilters} variant="outline">
-                  Limpiar filtros
-                </Button>
-              }
-            />
-          ) : (
-            <div>
-              {filteredGrouped.map(([category, items]) => (
-                <ServiceCategoryGroup
-                  key={category}
-                  slug={slug}
-                  category={category}
-                  services={items}
-                  open={isFiltering ? true : openCategory === category}
-                  onToggle={() =>
-                    setOpenCategory((prev) =>
-                      prev === category ? null : category,
-                    )
-                  }
-                  onServicePick={handleServicePick}
-                />
-              ))}
+            <div className="grid grid-cols-2 gap-6 text-sm">
+              <div>
+                <p className="text-slate-400 font-bold mb-1 uppercase tracking-wider text-xs">
+                  Dirección
+                </p>
+                <p className="text-slate-700 font-medium">
+                  Dirección no especificada
+                </p>
+              </div>
+              <div>
+                <p className="text-slate-400 font-bold mb-1 uppercase tracking-wider text-xs">
+                  Seguinos
+                </p>
+                <div className="flex gap-4 font-medium text-slate-700">
+                  <a
+                    href={business.visual?.instagramUrl || "#"}
+                    className="hover:text-brand transition"
+                  >
+                    Instagram
+                  </a>
+                  <a
+                    href={business.visual?.tiktokUrl || "#"}
+                    className="hover:text-brand transition"
+                  >
+                    TikTok
+                  </a>
+                </div>
+              </div>
             </div>
-          )}
-        </>
-      )}
-    </div>
-  );
-}
+          </div>
 
-function CategoryChip({ label, active, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition border ${active ? "bg-brand text-white border-brand" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50"}`}
-    >
-      {label}
-    </button>
+          <div className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-center min-h-[300px]">
+            <p className="text-slate-400">Mapa de ubicación</p>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }
