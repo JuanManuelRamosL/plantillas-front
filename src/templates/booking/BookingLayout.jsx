@@ -1,6 +1,14 @@
 import { useState, useEffect } from "react";
 import { NavLink, Outlet, useParams, useLocation } from "react-router-dom";
-import { Loader2, Menu, X } from "lucide-react";
+import {
+  Loader2,
+  Menu,
+  X,
+  MapPin,
+  MessageCircle,
+  Camera,
+  ArrowRight,
+} from "lucide-react";
 import { useBusinessStore } from "../../store/useBusinessStore";
 import { applyBrandPalette } from "../../utils/palettes";
 import {
@@ -11,6 +19,7 @@ import { BookingProvider } from "./context/BookingContext";
 import { BookingsProvider } from "./context/BookingsContext";
 import { PointsProvider } from "./context/PointsContext";
 import { ReviewsProvider } from "./context/ReviewsContext";
+import ReviewsCarousel from "./components/ReviewsCarousel";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -20,14 +29,13 @@ function ScrollToTop() {
   return null;
 }
 
-function LayoutInner({ business }) {
+function LayoutInner({ business, services }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [animateIn, setAnimateIn] = useState(false);
   const { customer } = useCustomerAuth();
   const location = useLocation();
 
-  // Cierra el menú automáticamente si cambia la ruta
   useEffect(() => {
     setIsOpen(false);
   }, [location.pathname]);
@@ -46,26 +54,29 @@ function LayoutInner({ business }) {
     }
   }, [isOpen]);
 
+  const footerBg =
+    business.visual?.coverImageUrl ||
+    "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?q=80&w=2000&auto=format&fit=crop";
+  const featuredServices = services?.slice(0, 5) || [];
+
   return (
     <div className="min-h-screen flex flex-col bg-main">
-      <header className="w-full px-6 py-5 flex items-center justify-between max-w-7xl mx-auto relative z-50">
-        {/* LOGO: Lleva al inicio del negocio */}
+      {/* HEADER */}
+      <header className="w-full px-4 sm:px-6 py-3 flex items-center justify-between max-w-7xl mx-auto relative z-50">
         <NavLink
           to={`/${business.slug}`}
           className="flex items-baseline gap-2"
           onClick={() => setIsOpen(false)}
         >
-          <span className="text-3xl font-black tracking-tighter text-slate-900 uppercase">
+          <span className="text-xl sm:text-3xl font-black tracking-tighter text-slate-900 uppercase">
             {business.name}
           </span>
-          <span className="text-sm font-medium text-slate-500 hidden sm:block">
+          <span className="text-xs font-medium text-slate-500 hidden sm:block">
             {business.category}
           </span>
         </NavLink>
 
-        {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-800">
-          {/* Si ya está en el inicio, scrollea suave. Si no, navega al inicio. */}
           <NavLink
             to={`/${business.slug}`}
             className="hover:text-brand transition"
@@ -86,7 +97,7 @@ function LayoutInner({ business }) {
           </NavLink>
           <NavLink
             to={`/${business.slug}/perfil`}
-            className="bg-slate-900 text-white px-5 py-2.5 rounded-full hover:bg-slate-800 transition shadow-sm"
+            className="bg-slate-900 text-white px-5 py-2 rounded-full hover:bg-slate-800 transition shadow-sm"
           >
             {customer ? "Mi perfil" : "Reservar"}
           </NavLink>
@@ -96,11 +107,11 @@ function LayoutInner({ business }) {
           className="md:hidden p-2 -mr-2 text-slate-900 focus:outline-none transition-transform active:scale-95"
           onClick={() => setIsOpen(!isOpen)}
         >
-          {isOpen ? <X size={28} /> : <Menu size={28} />}
+          {isOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </header>
 
-      {/* Menú Mobile Animado */}
+      {/* MENÚ MOBILE */}
       {isMounted && (
         <div
           className={`fixed inset-0 z-40 md:hidden bg-slate-900/40 backdrop-blur-sm transition-opacity duration-500 ease-in-out ${
@@ -109,7 +120,7 @@ function LayoutInner({ business }) {
           onClick={() => setIsOpen(false)}
         >
           <div
-            className={`absolute top-0 left-0 right-0 bg-white shadow-2xl rounded-b-[2rem] pt-24 pb-10 px-6 flex flex-col gap-2 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+            className={`absolute top-0 left-0 right-0 bg-white shadow-2xl rounded-b-[2rem] pt-20 pb-8 px-6 flex flex-col gap-2 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
               animateIn
                 ? "translate-y-0 opacity-100"
                 : "-translate-y-full opacity-0"
@@ -136,7 +147,7 @@ function LayoutInner({ business }) {
             </NavLink>
             <NavLink
               to={`/${business.slug}/perfil`}
-              className="mt-6 bg-brand text-white font-bold text-center px-6 py-4 rounded-full shadow-lg text-lg hover:opacity-90 transition"
+              className="mt-6 bg-brand text-white font-bold text-center px-6 py-3.5 rounded-full shadow-lg text-lg hover:opacity-90 transition"
             >
               {customer ? "Mi perfil" : "Reservar turno"}
             </NavLink>
@@ -148,11 +159,164 @@ function LayoutInner({ business }) {
         <Outlet />
       </main>
 
-      <footer className="w-full max-w-7xl mx-auto px-6 py-10 mt-20 border-t border-slate-300 flex justify-between items-center text-sm text-slate-500">
-        <span className="font-bold text-slate-900">{business.name}</span>
-        <span>
-          © {new Date().getFullYear()} {business.name}
-        </span>
+      {/* CARRUSEL DE COMENTARIOS */}
+      <ReviewsCarousel />
+
+      {/* FOOTER COMPLETO */}
+      <footer
+        id="contacto"
+        className="relative w-full overflow-hidden border-t border-slate-800"
+      >
+        <div className="absolute inset-0">
+          <img
+            src={footerBg}
+            alt="Fondo contacto"
+            className="w-full h-full object-cover object-center"
+          />
+          <div className="absolute inset-0 bg-slate-900/95 backdrop-blur-sm"></div>
+        </div>
+
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 lg:py-24">
+          {/* Agregamos flex flex-col y md:grid para cambiar el orden en mobile */}
+          <div className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-12 lg:gap-8">
+            {/* 1. MARCA Y WHATSAPP (En mobile se va al final con order-last) */}
+            <div className="text-white order-last md:order-none mt-8 md:mt-0 pt-8 md:pt-0 border-t border-white/10 md:border-0">
+              <h2 className="text-2xl sm:text-3xl font-black tracking-tighter uppercase mb-4">
+                {business.name}
+              </h2>
+              <p className="text-sm sm:text-base text-slate-400 mb-6 sm:mb-8 leading-relaxed">
+                Tu próximo turno te está esperando. Escribinos y coordinamos.
+              </p>
+
+              <button
+                type="button"
+                className="bg-brand text-white px-6 py-3 rounded-full font-bold flex items-center justify-center gap-2 hover:scale-105 transition-transform shadow-lg shadow-brand/30 text-sm sm:text-base w-full sm:w-auto mx-auto md:mx-0"
+              >
+                <MessageCircle size={18} className="sm:w-5 sm:h-5" /> Contactar
+                por WhatsApp
+              </button>
+            </div>
+
+            {/* 2. NAVEGACIÓN */}
+            <div className="text-slate-300">
+              <h3 className="text-white font-bold uppercase tracking-widest text-xs sm:text-sm mb-4 sm:mb-6">
+                Navegación
+              </h3>
+              <ul className="space-y-3 sm:space-y-4">
+                <li>
+                  <NavLink
+                    to={`/${business.slug}`}
+                    className="hover:text-brand transition flex items-center gap-2 text-sm sm:text-base"
+                  >
+                    <ArrowRight size={14} className="text-white shrink-0" />{" "}
+                    Inicio
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink
+                    to={`/${business.slug}`}
+                    className="hover:text-brand transition flex items-center gap-2 text-sm sm:text-base"
+                  >
+                    <ArrowRight size={14} className="text-white shrink-0" />{" "}
+                    Servicios
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink
+                    to={`/${business.slug}/perfil`}
+                    className="hover:text-brand transition flex items-center gap-2 text-sm sm:text-base"
+                  >
+                    <ArrowRight size={14} className="text-white shrink-0" /> Mi
+                    Perfil / Turnos
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink
+                    to={`/${business.slug}/ingresar`}
+                    className="hover:text-brand transition flex items-center gap-2 text-sm sm:text-base"
+                  >
+                    <ArrowRight size={14} className="text-white shrink-0" />{" "}
+                    Iniciar Sesión
+                  </NavLink>
+                </li>
+              </ul>
+            </div>
+
+            {/* 3. SERVICIOS DESTACADOS */}
+            <div className="text-slate-300">
+              <h3 className="text-white font-bold uppercase tracking-widest text-xs sm:text-sm mb-4 sm:mb-6">
+                Servicios
+              </h3>
+              <ul className="space-y-3 sm:space-y-4">
+                {featuredServices.length > 0 ? (
+                  featuredServices.map((s) => (
+                    <li key={s.id}>
+                      <NavLink
+                        to={`/${business.slug}`}
+                        className="hover:text-brand transition flex items-center gap-2 text-sm sm:text-base"
+                      >
+                        <span className="text-slate-500 text-xs">•</span>{" "}
+                        {s.name}
+                      </NavLink>
+                    </li>
+                  ))
+                ) : (
+                  <li className="text-slate-500 italic text-sm">
+                    No hay servicios
+                  </li>
+                )}
+              </ul>
+            </div>
+
+            {/* 4. UBICACIÓN Y REDES */}
+            <div className="text-slate-300">
+              <h3 className="text-white font-bold uppercase tracking-widest text-xs sm:text-sm mb-4 sm:mb-6">
+                Ubicación
+              </h3>
+
+              <div className="flex items-start gap-3 mb-6 sm:mb-8">
+                <MapPin
+                  size={18}
+                  className="text-white shrink-0 mt-0.5 sm:w-5 sm:h-5"
+                />
+                <p className="leading-relaxed text-sm sm:text-base">
+                  Dirección no especificada
+                </p>
+              </div>
+
+              <h3 className="text-white font-bold uppercase tracking-widest text-xs sm:text-sm mb-3 sm:mb-4">
+                Seguinos
+              </h3>
+              <div className="flex gap-3 sm:gap-4">
+                <a
+                  href={business.visual?.instagramUrl || "#"}
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-brand hover:text-white hover:border-brand transition"
+                >
+                  <Camera size={16} className="sm:w-4.5 sm:h-4.5" />
+                </a>
+                <a
+                  href={business.visual?.tiktokUrl || "#"}
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-brand hover:text-white hover:border-brand transition"
+                >
+                  <span className="font-bold text-[10px] sm:text-xs">TT</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Línea de Copyright */}
+        <div className="relative z-10 border-t border-white/10 w-full bg-black/40">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 flex flex-col sm:flex-row justify-between items-center text-xs sm:text-sm text-slate-400 gap-2">
+            <p className="font-bold text-white text-sm sm:text-base uppercase">
+              {business.name}
+            </p>
+            <p className="text-center sm:text-right">
+              © {new Date().getFullYear()} {business.name}. Todos los derechos
+              reservados.
+            </p>
+          </div>
+        </div>
       </footer>
     </div>
   );
@@ -160,7 +324,8 @@ function LayoutInner({ business }) {
 
 export default function BookingLayout() {
   const { slug } = useParams();
-  const { business, loading, error, fetchBusinessData } = useBusinessStore();
+  const { business, services, loading, error, fetchBusinessData } =
+    useBusinessStore();
 
   useEffect(() => {
     fetchBusinessData(slug);
@@ -202,7 +367,7 @@ export default function BookingLayout() {
           <ReviewsProvider slug={slug}>
             <BookingProvider slug={slug}>
               <ScrollToTop />
-              <LayoutInner business={business} />
+              <LayoutInner business={business} services={services} />
             </BookingProvider>
           </ReviewsProvider>
         </PointsProvider>
