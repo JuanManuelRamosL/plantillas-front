@@ -1,17 +1,13 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Search, X } from "lucide-react";
-import {
-  getBusinessBySlug,
-  groupServicesByCategory,
-} from "../mocks/businesses";
-import { useBooking } from "../context/BookingContext";
+import { Search, X, Loader2 } from "lucide-react";
+import { useBusinessStore } from "../../../store/useBusinessStore";
+import { useBooking } from "../context/BookingContext"; // Lo dejamos por ahora para la selección
 import { useCustomerAuth } from "../auth/CustomerAuthContext";
 import ServiceCategoryGroup from "../components/ServiceCategoryGroup";
 import EmptyState from "../components/ui/EmptyState";
 import Button from "../components/ui/Button";
 
-// Normaliza texto: minúsculas y sin tildes (para buscar "coloracion" y encontrar "Coloración")
 function normalize(str) {
   return (str || "")
     .toLowerCase()
@@ -19,41 +15,53 @@ function normalize(str) {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
+// Función auxiliar para agrupar (como los servicios vienen planos del back, los agrupamos acá)
+function groupServices(services) {
+  const groups = new Map();
+  for (const s of services) {
+    const key = s.category || "Otros";
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(s);
+  }
+  return Array.from(groups.entries()).sort(([a], [b]) => {
+    if (a === "Otros") return 1;
+    if (b === "Otros") return -1;
+    return a.localeCompare(b);
+  });
+}
+
 export default function ServicesPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const business = getBusinessBySlug(slug);
+
+  // 🔥 Traemos los datos del Store global
+  const { business, services, loading } = useBusinessStore();
+
   const { setService } = useBooking();
   const { customer } = useCustomerAuth();
 
-  const allGrouped = business ? groupServicesByCategory(business.services) : [];
-  const allCategories = allGrouped.map(([cat]) => cat);
-
-  const [openCategory, setOpenCategory] = useState(null);
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("Todas");
+  const [openCategory, setOpenCategory] = useState(null);
 
-  // Reset al cambiar de negocio
-  useEffect(() => {
-    setOpenCategory(null);
-    setQuery("");
-    setActiveCategory("Todas");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug]);
+  const groupedServices = useMemo(
+    () => groupServices(services || []),
+    [services],
+  );
+  const allCategories = useMemo(
+    () => groupedServices.map(([cat]) => cat),
+    [groupedServices],
+  );
 
-  // Filtrado reactivo
   const filteredGrouped = useMemo(() => {
-    if (!business) return [];
     const q = normalize(query.trim());
 
-    return allGrouped
-      .map(([category, services]) => {
-        // Filtro por categoría activa
-        if (activeCategory !== "Todas" && category !== activeCategory) {
+    return groupedServices
+      .map(([category, items]) => {
+        if (activeCategory !== "Todas" && category !== activeCategory)
           return [category, []];
-        }
-        // Filtro por texto
-        const matches = services.filter((s) => {
+
+        const matches = items.filter((s) => {
           if (!q) return true;
           return (
             normalize(s.name).includes(q) ||
@@ -62,8 +70,8 @@ export default function ServicesPage() {
         });
         return [category, matches];
       })
-      .filter(([, services]) => services.length > 0);
-  }, [allGrouped, query, activeCategory, business]);
+      .filter(([, items]) => items.length > 0);
+  }, [groupedServices, query, activeCategory]);
 
   const isFiltering = query.trim().length > 0 || activeCategory !== "Todas";
   const totalResults = filteredGrouped.reduce(
@@ -71,18 +79,20 @@ export default function ServicesPage() {
     0,
   );
 
-  if (!business) return null;
-
-  const toggle = (category) => {
-    setOpenCategory((prev) => (prev === category ? null : category));
-  };
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <Loader2 className="animate-spin text-brand" />
+      </div>
+    );
+  }
 
   const handleServicePick = (service) => {
-    const deposit = service.requiresDeposit
-      ? Math.round((service.price * service.depositPercent) / 100)
-      : 0;
+    // El backend nos dice si pide seña en el objeto del negocio
+    const requiresDeposit = business?.depositMode !== "none";
+    const depositAmount = requiresDeposit ? business.depositValue : 0;
 
-    setService(service.id, service.requiresDeposit, deposit);
+    setService(service.id, requiresDeposit, depositAmount);
 
     if (!customer) {
       navigate(`/${slug}/ingresar`, { state: { from: `/${slug}/experto` } });
@@ -96,8 +106,6 @@ export default function ServicesPage() {
     setActiveCategory("Todas");
   };
 
-  const showCategoryChips = allCategories.length >= 2;
-
   return (
     <div>
       <header className="mb-4">
@@ -109,14 +117,13 @@ export default function ServicesPage() {
         </p>
       </header>
 
-      {business.services.length === 0 ? (
+      {services.length === 0 ? (
         <EmptyState
           title="Sin servicios disponibles"
           description="Este negocio todavía no cargó servicios."
         />
       ) : (
         <>
-          {/* Buscador */}
           <div className="relative mb-3">
             <Search
               size={16}
@@ -127,24 +134,20 @@ export default function ServicesPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Buscar servicio…"
-              className="w-full pl-9 pr-9 py-3 rounded-2xl border border-slate-200 bg-white text-sm
-                         focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition"
+              className="w-full pl-9 pr-9 py-3 rounded-2xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition"
             />
             {query && (
               <button
                 type="button"
                 onClick={() => setQuery("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full
-                           flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
-                aria-label="Limpiar búsqueda"
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
               >
                 <X size={14} />
               </button>
             )}
           </div>
 
-          {/* Chips de categoría */}
-          {showCategoryChips && (
+          {allCategories.length >= 2 && (
             <div className="flex gap-2 overflow-x-auto pb-2 mb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
               <CategoryChip
                 label="Todas"
@@ -162,11 +165,10 @@ export default function ServicesPage() {
             </div>
           )}
 
-          {/* Contador de resultados cuando se filtra */}
           {isFiltering && (
             <div className="flex items-center justify-between mb-3 text-xs text-slate-500">
               <span>
-                {totalResults} {totalResults === 1 ? "resultado" : "resultados"}
+                {totalResults} {totalResults === 1 ? "resultado" : "resultados"}{" "}
                 {query && <> para "{query}"</>}
               </span>
               <button
@@ -178,7 +180,6 @@ export default function ServicesPage() {
             </div>
           )}
 
-          {/* Lista agrupada */}
           {filteredGrouped.length === 0 ? (
             <EmptyState
               title="Sin resultados"
@@ -191,15 +192,18 @@ export default function ServicesPage() {
             />
           ) : (
             <div>
-              {filteredGrouped.map(([category, services]) => (
+              {filteredGrouped.map(([category, items]) => (
                 <ServiceCategoryGroup
                   key={category}
                   slug={slug}
                   category={category}
-                  services={services}
-                  // Si hay filtro activo, abrimos todas las categorías con resultados
+                  services={items}
                   open={isFiltering ? true : openCategory === category}
-                  onToggle={() => toggle(category)}
+                  onToggle={() =>
+                    setOpenCategory((prev) =>
+                      prev === category ? null : category,
+                    )
+                  }
                   onServicePick={handleServicePick}
                 />
               ))}
@@ -216,12 +220,7 @@ function CategoryChip({ label, active, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition border
-        ${
-          active
-            ? "bg-brand text-white border-brand"
-            : "bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
-        }`}
+      className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition border ${active ? "bg-brand text-white border-brand" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50"}`}
     >
       {label}
     </button>
