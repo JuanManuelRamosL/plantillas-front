@@ -20,6 +20,7 @@ import { PointsProvider } from "./context/PointsContext";
 import { ReviewsProvider } from "./context/ReviewsContext";
 import ReviewsCarousel from "./components/ReviewsCarousel";
 import SkeletonLoader from "./components/SkeletonLoader";
+import AnimateOnScroll from "./components/AnimateOnScroll";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -68,7 +69,6 @@ function LayoutInner({ business, services }) {
           className="flex items-baseline gap-2"
           onClick={() => setIsOpen(false)}
         >
-          {/* ACÁ SACAMOS EL SPAN DE LA CATEGORÍA */}
           <span className="text-xl sm:text-3xl font-black tracking-tighter text-slate-900 uppercase">
             {business.name}
           </span>
@@ -95,7 +95,7 @@ function LayoutInner({ business, services }) {
           </NavLink>
           <NavLink
             to={`/${business.slug}/perfil`}
-            className="bg-slate-900 text-white px-5 py-2 rounded-full hover:bg-slate-800 transition shadow-sm"
+            className="bg-slate-900 text-white px-5 py-2 rounded-full hover:bg-slate-800 hover:scale-105 transition-all shadow-sm"
           >
             {customer ? "Mi perfil" : "Reservar"}
           </NavLink>
@@ -157,7 +157,9 @@ function LayoutInner({ business, services }) {
         <Outlet />
       </main>
 
-      <ReviewsCarousel />
+      <AnimateOnScroll>
+        <ReviewsCarousel />
+      </AnimateOnScroll>
 
       {/* FOOTER */}
       <footer
@@ -175,125 +177,133 @@ function LayoutInner({ business, services }) {
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 lg:py-24">
           <div className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-12 lg:gap-8">
-            <div className="text-white order-last md:order-none mt-8 md:mt-0 pt-8 md:pt-0 border-t border-white/10 md:border-0">
-              <h2 className="text-2xl sm:text-3xl font-black tracking-tighter uppercase mb-4">
-                {business.name}
-              </h2>
-              <p className="text-sm sm:text-base text-slate-400 mb-6 sm:mb-8 leading-relaxed">
-                Tu próximo turno te está esperando. Escribinos y coordinamos.
-              </p>
-
-              <button
-                type="button"
-                className="bg-brand text-white px-6 py-3 rounded-full font-bold flex items-center justify-center gap-2 hover:scale-105 transition-transform shadow-lg shadow-brand/30 text-sm sm:text-base w-full sm:w-auto mx-auto md:mx-0"
-              >
-                <MessageCircle size={18} className="sm:w-5 sm:h-5" /> Contactar
-                por WhatsApp
-              </button>
-            </div>
-
-            <div className="text-slate-300">
-              <h3 className="text-white font-bold uppercase tracking-widest text-xs sm:text-sm mb-4 sm:mb-6">
-                Navegación
-              </h3>
-              <ul className="space-y-3 sm:space-y-4">
-                <li>
-                  <NavLink
-                    to={`/${business.slug}`}
-                    className="hover:text-brand transition flex items-center gap-2 text-sm sm:text-base"
-                  >
-                    <ArrowRight size={14} className="text-white shrink-0" />{" "}
-                    Inicio
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink
-                    to={`/${business.slug}`}
-                    className="hover:text-brand transition flex items-center gap-2 text-sm sm:text-base"
-                  >
-                    <ArrowRight size={14} className="text-white shrink-0" />{" "}
-                    Servicios
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink
-                    to={`/${business.slug}/perfil`}
-                    className="hover:text-brand transition flex items-center gap-2 text-sm sm:text-base"
-                  >
-                    <ArrowRight size={14} className="text-white shrink-0" /> Mi
-                    Perfil / Turnos
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink
-                    to={`/${business.slug}/ingresar`}
-                    className="hover:text-brand transition flex items-center gap-2 text-sm sm:text-base"
-                  >
-                    <ArrowRight size={14} className="text-white shrink-0" />{" "}
-                    Iniciar Sesión
-                  </NavLink>
-                </li>
-              </ul>
-            </div>
-
-            <div className="text-slate-300">
-              <h3 className="text-white font-bold uppercase tracking-widest text-xs sm:text-sm mb-4 sm:mb-6">
-                Servicios
-              </h3>
-              <ul className="space-y-3 sm:space-y-4">
-                {featuredServices.length > 0 ? (
-                  featuredServices.map((s) => (
-                    <li key={s.id}>
-                      <NavLink
-                        to={`/${business.slug}`}
-                        className="hover:text-brand transition flex items-center gap-2 text-sm sm:text-base"
-                      >
-                        <span className="text-slate-500 text-xs">•</span>{" "}
-                        {s.name}
-                      </NavLink>
-                    </li>
-                  ))
-                ) : (
-                  <li className="text-slate-500 italic text-sm">
-                    No hay servicios
-                  </li>
-                )}
-              </ul>
-            </div>
-
-            <div className="text-slate-300">
-              <h3 className="text-white font-bold uppercase tracking-widest text-xs sm:text-sm mb-4 sm:mb-6">
-                Ubicación
-              </h3>
-
-              <div className="flex items-start gap-3 mb-6 sm:mb-8">
-                <MapPin
-                  size={18}
-                  className="text-white shrink-0 mt-0.5 sm:w-5 sm:h-5"
-                />
-                <p className="leading-relaxed text-sm sm:text-base">
-                  Dirección no especificada
+            <AnimateOnScroll delay={0}>
+              <div className="text-white order-last md:order-none mt-8 md:mt-0 pt-8 md:pt-0 border-t border-white/10 md:border-0">
+                <h2 className="text-2xl sm:text-3xl font-black tracking-tighter uppercase mb-4">
+                  {business.name}
+                </h2>
+                <p className="text-sm sm:text-base text-slate-400 mb-6 sm:mb-8 leading-relaxed">
+                  Tu próximo turno te está esperando. Escribinos y coordinamos.
                 </p>
-              </div>
 
-              <h3 className="text-white font-bold uppercase tracking-widest text-xs sm:text-sm mb-3 sm:mb-4">
-                Seguinos
-              </h3>
-              <div className="flex gap-3 sm:gap-4">
-                <a
-                  href={business.visual?.instagramUrl || "#"}
-                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-brand hover:text-white hover:border-brand transition"
+                <button
+                  type="button"
+                  className="bg-brand text-white px-6 py-3 rounded-full font-bold flex items-center justify-center gap-2 hover:scale-105 transition-transform shadow-lg shadow-brand/30 text-sm sm:text-base w-full sm:w-auto mx-auto md:mx-0"
                 >
-                  <Camera size={16} className="sm:w-4.5 sm:h-4.5" />
-                </a>
-                <a
-                  href={business.visual?.tiktokUrl || "#"}
-                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-brand hover:text-white hover:border-brand transition"
-                >
-                  <span className="font-bold text-[10px] sm:text-xs">TT</span>
-                </a>
+                  <MessageCircle size={18} className="sm:w-5 sm:h-5" />{" "}
+                  Contactar por WhatsApp
+                </button>
               </div>
-            </div>
+            </AnimateOnScroll>
+
+            <AnimateOnScroll delay={150}>
+              <div className="text-slate-300">
+                <h3 className="text-white font-bold uppercase tracking-widest text-xs sm:text-sm mb-4 sm:mb-6">
+                  Navegación
+                </h3>
+                <ul className="space-y-3 sm:space-y-4">
+                  <li>
+                    <NavLink
+                      to={`/${business.slug}`}
+                      className="hover:text-brand transition flex items-center gap-2 text-sm sm:text-base"
+                    >
+                      <ArrowRight size={14} className="text-white shrink-0" />{" "}
+                      Inicio
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink
+                      to={`/${business.slug}`}
+                      className="hover:text-brand transition flex items-center gap-2 text-sm sm:text-base"
+                    >
+                      <ArrowRight size={14} className="text-white shrink-0" />{" "}
+                      Servicios
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink
+                      to={`/${business.slug}/perfil`}
+                      className="hover:text-brand transition flex items-center gap-2 text-sm sm:text-base"
+                    >
+                      <ArrowRight size={14} className="text-white shrink-0" />{" "}
+                      Mi Perfil / Turnos
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink
+                      to={`/${business.slug}/ingresar`}
+                      className="hover:text-brand transition flex items-center gap-2 text-sm sm:text-base"
+                    >
+                      <ArrowRight size={14} className="text-white shrink-0" />{" "}
+                      Iniciar Sesión
+                    </NavLink>
+                  </li>
+                </ul>
+              </div>
+            </AnimateOnScroll>
+
+            <AnimateOnScroll delay={300}>
+              <div className="text-slate-300">
+                <h3 className="text-white font-bold uppercase tracking-widest text-xs sm:text-sm mb-4 sm:mb-6">
+                  Servicios
+                </h3>
+                <ul className="space-y-3 sm:space-y-4">
+                  {featuredServices.length > 0 ? (
+                    featuredServices.map((s) => (
+                      <li key={s.id}>
+                        <NavLink
+                          to={`/${business.slug}`}
+                          className="hover:text-brand transition flex items-center gap-2 text-sm sm:text-base"
+                        >
+                          <span className="text-slate-500 text-xs">•</span>{" "}
+                          {s.name}
+                        </NavLink>
+                      </li>
+                    ))
+                  ) : (
+                    <li className="text-slate-500 italic text-sm">
+                      No hay servicios
+                    </li>
+                  )}
+                </ul>
+              </div>
+            </AnimateOnScroll>
+
+            <AnimateOnScroll delay={450}>
+              <div className="text-slate-300">
+                <h3 className="text-white font-bold uppercase tracking-widest text-xs sm:text-sm mb-4 sm:mb-6">
+                  Ubicación
+                </h3>
+
+                <div className="flex items-start gap-3 mb-6 sm:mb-8">
+                  <MapPin
+                    size={18}
+                    className="text-white shrink-0 mt-0.5 sm:w-5 sm:h-5"
+                  />
+                  <p className="leading-relaxed text-sm sm:text-base">
+                    Dirección no especificada
+                  </p>
+                </div>
+
+                <h3 className="text-white font-bold uppercase tracking-widest text-xs sm:text-sm mb-3 sm:mb-4">
+                  Seguinos
+                </h3>
+                <div className="flex gap-3 sm:gap-4">
+                  <a
+                    href={business.visual?.instagramUrl || "#"}
+                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-brand hover:text-white hover:border-brand transition hover:-translate-y-1"
+                  >
+                    <Camera size={16} className="sm:w-4.5 sm:h-4.5" />
+                  </a>
+                  <a
+                    href={business.visual?.tiktokUrl || "#"}
+                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-brand hover:text-white hover:border-brand transition hover:-translate-y-1"
+                  >
+                    <span className="font-bold text-[10px] sm:text-xs">TT</span>
+                  </a>
+                </div>
+              </div>
+            </AnimateOnScroll>
           </div>
         </div>
 

@@ -1,21 +1,21 @@
-/* src/index.css */
 @import "tailwindcss";
 
 :root {
   --brand: #ff5100;
   --brand-fg: #ffffff;
+
   --bg-main: #f5f2eb;
   --bg-card: #ffffff;
   --bg-dark: #1b2333;
+
   --text-main: #111111;
   --text-muted: #666666;
   --text-dark: #ffffff;
 }
 
-/* 👇 AGREGA ESTA LÍNEA PARA EL SCROLL SUAVE */
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 100px; /* Para que el header fijo no tape el título al scrollear */
+  scroll-padding-top: 100px;
 }
 
 html,
@@ -33,20 +33,6 @@ body {
   -webkit-font-smoothing: antialiased;
   background-color: var(--bg-main);
   color: var(--text-main);
-}
-
-/* Fuerza el cursor pointer en botones y enlaces, incluso si Tailwind lo reseteó */
-button,
-a,
-[role="button"],
-.cursor-pointer {
-  cursor: pointer;
-}
-
-/* Deshabilita el cursor pointer si el botón está deshabilitado */
-button:disabled,
-a[disabled] {
-  cursor: not-allowed;
 }
 
 .bg-brand {
@@ -68,6 +54,18 @@ a[disabled] {
   color: var(--text-muted);
 }
 
+/* Fuerza el cursor pointer en botones y enlaces */
+button,
+a,
+[role="button"],
+.cursor-pointer {
+  cursor: pointer;
+}
+button:disabled,
+a[disabled] {
+  cursor: not-allowed;
+}
+
 /* Animación de brillo para los Skeletons */
 @keyframes shimmer {
   0% {
@@ -77,9 +75,58 @@ a[disabled] {
     background-position: 200% 0;
   }
 }
-
 .skeleton-shimmer {
   background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite linear;
+}
+
+/* 1. Animación de aparición (Fade in up) */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  opacity: 0;
+}
+.delay-100 {
+  animation-delay: 100ms;
+}
+.delay-200 {
+  animation-delay: 200ms;
+}
+.delay-300 {
+  animation-delay: 300ms;
+}
+
+/* 2. Suavizar el hover de las tarjetas */
+.card-hover {
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+}
+.card-hover:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.1);
+}
+
+/* 3. Animación al hacer scroll (Reveal) */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition:
+    opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
 }

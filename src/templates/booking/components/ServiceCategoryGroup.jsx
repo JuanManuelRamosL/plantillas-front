@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Clock, ChevronDown, ChevronUp, ChevronRight } from "lucide-react";
 import Card from "./ui/Card";
+import AnimateOnScroll from "./AnimateOnScroll";
 
 export default function ServiceCategoryGroup({
   slug,
@@ -28,7 +29,7 @@ export default function ServiceCategoryGroup({
   };
 
   return (
-    <div className="mb-16 last:mb-0">
+    <AnimateOnScroll className="mb-16 last:mb-0">
       {/* Título de la Categoría */}
       {category && category !== "Otros" && (
         <div className="flex items-center gap-2 sm:gap-4 mb-6">
@@ -42,7 +43,7 @@ export default function ServiceCategoryGroup({
         </div>
       )}
 
-      {/* Grilla de Servicios (items-end para que las cards chicas se anclen al piso) */}
+      {/* Grilla de Servicios */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 items-end">
         {displayedServices.map((s) => {
           const isDescExpanded = expandedCardId === s.id;
@@ -50,8 +51,7 @@ export default function ServiceCategoryGroup({
           return (
             <Card
               key={s.id}
-              /* h-full solo si tiene imagen para estirarse, si no, tamaño natural */
-              className={`bg-white border border-slate-200 rounded-2xl flex flex-col overflow-hidden hover:shadow-lg transition-shadow duration-300 ${s.imageUrl ? "h-full" : ""}`}
+              className={`card-hover bg-white border border-slate-200 rounded-2xl flex flex-col overflow-hidden ${s.imageUrl ? "h-full" : ""}`}
             >
               {/* IMAGEN */}
               {s.imageUrl && (
@@ -65,7 +65,6 @@ export default function ServiceCategoryGroup({
               )}
 
               {/* CONTENIDO DE LA TARJETA */}
-              {/* flex-1 solo si tiene imagen, para empujar el botón abajo */}
               <div
                 className={`p-4 sm:p-6 flex flex-col ${s.imageUrl ? "flex-1" : ""}`}
               >
@@ -109,7 +108,7 @@ export default function ServiceCategoryGroup({
                   )}
                 </div>
 
-                {/* Botonera (mt-auto solo si tiene imagen para irse al fondo) */}
+                {/* Botonera */}
                 <div
                   className={`flex flex-col min-[360px]:flex-row items-start min-[360px]:items-center justify-between border-t border-slate-100 gap-3 min-[360px]:gap-0 pt-4 sm:pt-5 ${s.imageUrl ? "mt-auto" : "mt-5"}`}
                 >
@@ -119,7 +118,7 @@ export default function ServiceCategoryGroup({
                   <button
                     type="button"
                     onClick={() => onServicePick(s)}
-                    className="bg-brand text-white text-xs sm:text-sm font-bold px-4 sm:px-5 py-2 sm:py-2.5 rounded-full hover:opacity-90 transition shadow-sm w-full min-[360px]:w-auto text-center"
+                    className="bg-brand text-white text-xs sm:text-sm font-bold px-4 sm:px-5 py-2 sm:py-2.5 rounded-full hover:opacity-90 hover:scale-105 active:scale-95 transition-all shadow-sm w-full min-[360px]:w-auto text-center"
                   >
                     Reservar
                   </button>
@@ -135,7 +134,8 @@ export default function ServiceCategoryGroup({
         <div className="mt-8 flex justify-center">
           <button
             onClick={() => setIsExpandedList(!isExpandedList)}
-            className="flex items-center gap-2 px-6 py-3 rounded-full border-2 border-slate-200 text-slate-600 font-bold text-sm hover:border-brand hover:text-brand transition-colors bg-white shadow-sm"
+            /* Cambiamos transition-colors por transition-all */
+            className="flex items-center gap-2 px-6 py-3 rounded-full border-2 border-slate-200 text-slate-600 font-bold text-sm hover:border-brand hover:text-brand transition-all bg-white shadow-sm hover:scale-105 active:scale-95"
           >
             {isExpandedList ? (
               <>
@@ -149,6 +149,6 @@ export default function ServiceCategoryGroup({
           </button>
         </div>
       )}
-    </div>
+    </AnimateOnScroll>
   );
 }

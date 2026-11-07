@@ -5,6 +5,7 @@ import { useBusinessStore } from "../../../store/useBusinessStore";
 import { useBooking } from "../context/BookingContext";
 import { useCustomerAuth } from "../auth/CustomerAuthContext";
 import ServiceCategoryGroup from "../components/ServiceCategoryGroup";
+import AnimateOnScroll from "../components/AnimateOnScroll";
 
 function groupServices(services) {
   const groups = new Map();
@@ -49,14 +50,13 @@ export default function ServicesPage() {
 
   return (
     <div className="bg-main pb-10">
-      {/* 1. BANNER DE FONDO CON BLUR Y DIFUMINADO HACIA ABAJO */}
+      {/* 1. BANNER DE FONDO */}
       <div className="w-full h-[30vh] min-h-[200px] max-h-[250px] relative overflow-hidden">
         <img
           src={heroBg}
           alt="Portada"
           className="w-full h-full object-cover object-center blur-[2px] scale-105"
         />
-        {/* Gradiente más sutil: empieza a difuminar recién en el último 30% de la imagen */}
         <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-main)] via-transparent to-transparent"></div>
       </div>
 
@@ -77,7 +77,7 @@ export default function ServicesPage() {
             )}
           </div>
 
-          <div className="mt-0 sm:mt-6">
+          <div className="mt-0 sm:mt-6 animate-fade-in-up delay-200">
             <h1 className="text-2xl sm:text-5xl font-black text-slate-900 md:text-black tracking-tight mb-1">
               {business.name}
             </h1>
@@ -94,12 +94,12 @@ export default function ServicesPage() {
         id="servicios"
         className="max-w-7xl mx-auto px-4 sm:px-6 pt-0 pb-10 mb-10 md:mt-12"
       >
-        <div className="mb-8 text-left">
+        <AnimateOnScroll className="mb-8 text-left">
           <h2 className="text-4xl sm:text-6xl md:text-5xl lg:text-6xl font-black tracking-tighter text-slate-900 leading-none">
             Servicios
             <br />y precios
           </h2>
-        </div>
+        </AnimateOnScroll>
 
         {services.length === 0 ? (
           <div className="text-center py-20 text-slate-500">
