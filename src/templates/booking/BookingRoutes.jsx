@@ -10,6 +10,7 @@ import CustomerLoginPage from "./pages/CustomerLoginPage";
 import LocationPage from "./pages/LocationPage";
 import CoursesPage from "./pages/CoursesPage";
 import AppPage from "./pages/AppPage";
+import ContactPage from "./pages/ContactPage"; // 👈 IMPORTAMOS
 import RequireCustomerAuth from "./auth/RequireCustomerAuth";
 
 export default function BookingRoutes() {
@@ -33,6 +34,8 @@ export default function BookingRoutes() {
         <Route path="donde-estamos" element={<LocationPage />} />
         <Route path="cursos" element={<CoursesPage />} />
         <Route path="nuestra-app" element={<AppPage />} />
+        <Route path="contacto" element={<ContactPage />} />{" "}
+        {/* 👈 RUTA NUEVA */}
       </Route>
     </Routes>
   );
