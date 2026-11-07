@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Loader2, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { useBusinessStore } from "../../../store/useBusinessStore";
 import { useBooking } from "../context/BookingContext";
 import { useCustomerAuth } from "../auth/CustomerAuthContext";
@@ -19,7 +19,7 @@ function groupServices(services) {
 export default function ServicesPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const { business, services, loading } = useBusinessStore();
+  const { business, services } = useBusinessStore();
   const { setService } = useBooking();
   const { customer } = useCustomerAuth();
 
@@ -28,13 +28,7 @@ export default function ServicesPage() {
     [services],
   );
 
-  if (loading) {
-    return (
-      <div className="flex justify-center py-20">
-        <Loader2 className="animate-spin text-brand" />
-      </div>
-    );
-  }
+  if (!business) return null;
 
   const handleServicePick = (service) => {
     const requiresDeposit = business?.depositMode !== "none";
@@ -55,14 +49,15 @@ export default function ServicesPage() {
 
   return (
     <div className="bg-main pb-10">
-      {/* 1. BANNER DE FONDO CON BLUR */}
+      {/* 1. BANNER DE FONDO CON BLUR Y DIFUMINADO HACIA ABAJO */}
       <div className="w-full h-[30vh] min-h-[200px] max-h-[250px] relative overflow-hidden">
         <img
           src={heroBg}
           alt="Portada"
           className="w-full h-full object-cover object-center blur-[2px] scale-105"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-main)] via-transparent to-transparent opacity-80"></div>
+        {/* Gradiente más sutil: empieza a difuminar recién en el último 30% de la imagen */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-main)] via-transparent to-transparent"></div>
       </div>
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
@@ -87,7 +82,6 @@ export default function ServicesPage() {
               {business.name}
             </h1>
             <div className="flex items-center gap-2 text-sm sm:text-base font-medium text-slate-500">
-              {/* ICONO EN NEGRO PURO */}
               <MapPin size={16} className="text-black" />
               <span>Dirección no especificada</span>
             </div>

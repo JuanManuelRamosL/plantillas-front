@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { NavLink, Outlet, useParams, useLocation } from "react-router-dom";
 import {
-  Loader2,
   Menu,
   X,
   MapPin,
@@ -20,6 +19,7 @@ import { BookingsProvider } from "./context/BookingsContext";
 import { PointsProvider } from "./context/PointsContext";
 import { ReviewsProvider } from "./context/ReviewsContext";
 import ReviewsCarousel from "./components/ReviewsCarousel";
+import SkeletonLoader from "./components/SkeletonLoader";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -68,11 +68,9 @@ function LayoutInner({ business, services }) {
           className="flex items-baseline gap-2"
           onClick={() => setIsOpen(false)}
         >
+          {/* ACÁ SACAMOS EL SPAN DE LA CATEGORÍA */}
           <span className="text-xl sm:text-3xl font-black tracking-tighter text-slate-900 uppercase">
             {business.name}
-          </span>
-          <span className="text-xs font-medium text-slate-500 hidden sm:block">
-            {business.category}
           </span>
         </NavLink>
 
@@ -159,10 +157,9 @@ function LayoutInner({ business, services }) {
         <Outlet />
       </main>
 
-      {/* CARRUSEL DE COMENTARIOS */}
       <ReviewsCarousel />
 
-      {/* FOOTER COMPLETO */}
+      {/* FOOTER */}
       <footer
         id="contacto"
         className="relative w-full overflow-hidden border-t border-slate-800"
@@ -177,9 +174,7 @@ function LayoutInner({ business, services }) {
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 lg:py-24">
-          {/* Agregamos flex flex-col y md:grid para cambiar el orden en mobile */}
           <div className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-12 lg:gap-8">
-            {/* 1. MARCA Y WHATSAPP (En mobile se va al final con order-last) */}
             <div className="text-white order-last md:order-none mt-8 md:mt-0 pt-8 md:pt-0 border-t border-white/10 md:border-0">
               <h2 className="text-2xl sm:text-3xl font-black tracking-tighter uppercase mb-4">
                 {business.name}
@@ -197,7 +192,6 @@ function LayoutInner({ business, services }) {
               </button>
             </div>
 
-            {/* 2. NAVEGACIÓN */}
             <div className="text-slate-300">
               <h3 className="text-white font-bold uppercase tracking-widest text-xs sm:text-sm mb-4 sm:mb-6">
                 Navegación
@@ -242,7 +236,6 @@ function LayoutInner({ business, services }) {
               </ul>
             </div>
 
-            {/* 3. SERVICIOS DESTACADOS */}
             <div className="text-slate-300">
               <h3 className="text-white font-bold uppercase tracking-widest text-xs sm:text-sm mb-4 sm:mb-6">
                 Servicios
@@ -268,7 +261,6 @@ function LayoutInner({ business, services }) {
               </ul>
             </div>
 
-            {/* 4. UBICACIÓN Y REDES */}
             <div className="text-slate-300">
               <h3 className="text-white font-bold uppercase tracking-widest text-xs sm:text-sm mb-4 sm:mb-6">
                 Ubicación
@@ -305,7 +297,6 @@ function LayoutInner({ business, services }) {
           </div>
         </div>
 
-        {/* Línea de Copyright */}
         <div className="relative z-10 border-t border-white/10 w-full bg-black/40">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 flex flex-col sm:flex-row justify-between items-center text-xs sm:text-sm text-slate-400 gap-2">
             <p className="font-bold text-white text-sm sm:text-base uppercase">
@@ -338,11 +329,7 @@ export default function BookingLayout() {
   }, [business]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-main">
-        <Loader2 className="animate-spin text-brand" size={32} />
-      </div>
-    );
+    return <SkeletonLoader />;
   }
 
   if (error || !business) {
