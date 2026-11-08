@@ -2,8 +2,7 @@ import { useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { MapPin } from "lucide-react";
 import { useBusinessStore } from "../../../store/useBusinessStore";
-import { useBooking } from "../context/BookingContext";
-import { useCustomerAuth } from "../auth/CustomerAuthContext";
+import { useBookingStore } from "../../../store/useBookingStore";
 import ServiceCategoryGroup from "../components/ServiceCategoryGroup";
 import AnimateOnScroll from "../components/AnimateOnScroll";
 
@@ -21,8 +20,7 @@ export default function ServicesPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { business, services } = useBusinessStore();
-  const { setService } = useBooking();
-  const { customer } = useCustomerAuth();
+  const { setService } = useBookingStore();
 
   const groupedServices = useMemo(
     () => groupServices(services || []),
@@ -32,15 +30,9 @@ export default function ServicesPage() {
   if (!business) return null;
 
   const handleServicePick = (service) => {
-    const requiresDeposit = business?.depositMode !== "none";
-    const depositAmount = requiresDeposit ? business.depositValue : 0;
-    setService(service.id, requiresDeposit, depositAmount);
-
-    if (!customer) {
-      navigate(`/${slug}/ingresar`, { state: { from: `/${slug}/experto` } });
-    } else {
-      navigate(`/${slug}/experto`);
-    }
+    // Guardamos el servicio y avanzamos directo, sin pedir login
+    setService(service);
+    navigate(`/${slug}/experto`);
   };
 
   const heroBg =
@@ -50,7 +42,7 @@ export default function ServicesPage() {
 
   return (
     <div className="bg-main pb-10">
-      {/* 1. BANNER DE FONDO */}
+      {/* 1. BANNER DE FONDO CON BLUR */}
       <div className="w-full h-[30vh] min-h-[200px] max-h-[250px] relative overflow-hidden">
         <img
           src={heroBg}

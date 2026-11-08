@@ -1,93 +1,116 @@
-import { Link, Navigate, useParams } from "react-router-dom";
-import { ChevronRight } from "lucide-react";
-import {
-  getBusinessBySlug,
-  getService,
-  getExpertsForService,
-} from "../mocks/businesses";
-import { useBooking } from "../context/BookingContext";
+import { useState, useEffect } from "react";
+import { Link, Navigate, useParams, useNavigate } from "react-router-dom";
+import { Loader2, ChevronLeft, Clock } from "lucide-react";
+import { useBusinessStore } from "../../../store/useBusinessStore";
+import { useBookingStore } from "../../../store/useBookingStore";
+import { apiFetch } from "../../../api/client";
+import AnimateOnScroll from "../components/AnimateOnScroll";
 import Card from "../components/ui/Card";
-import Stepper from "../components/ui/Stepper";
-import EmptyState from "../components/ui/EmptyState";
 
 export default function ExpertPage() {
   const { slug } = useParams();
-  const business = getBusinessBySlug(slug);
-  const { state, setExpert } = useBooking();
+  const navigate = useNavigate();
+  const { business } = useBusinessStore();
+  const { service, setExpert } = useBookingStore();
 
-  if (!business) return null;
+  const [experts, setExperts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  if (!state.serviceId) {
+  // Si no hay servicio seleccionado, volvemos al inicio
+  if (!service) {
     return <Navigate to={`/${slug}`} replace />;
   }
 
-  const service = getService(business, state.serviceId);
-  const experts = getExpertsForService(business, state.serviceId);
+  useEffect(() => {
+    // Traemos los expertos que hacen ESE servicio específico
+    apiFetch(`/b/${slug}/experts?serviceId=${service.id}`)
+      .then((data) => setExperts(data))
+      .catch((err) => console.error(err))
+      .finally(() => setLoading(false));
+  }, [slug, service.id]);
+
+  const handleSelectExpert = (expert) => {
+    setExpert(expert);
+    navigate(`/${slug}/fecha`);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="animate-spin text-brand" size={32} />
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <Stepper current="experto" />
+    <div className="bg-main pb-20 pt-8 sm:pt-12 min-h-screen">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6">
+        <button
+          onClick={() => navigate(`/${slug}`)}
+          className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-brand transition mb-8 group"
+        >
+          <ChevronLeft
+            size={18}
+            className="group-hover:-translate-x-1 transition-transform"
+          />
+          Volver a servicios
+        </button>
 
-      <header className="mb-5">
-        <h2 className="text-xl sm:text-2xl font-semibold text-slate-900">
-          Elegí un profesional
-        </h2>
-        <p className="text-sm text-slate-500 mt-1">
-          Para{" "}
-          <span className="font-medium text-slate-700">{service?.name}</span>
-        </p>
-      </header>
+        <AnimateOnScroll>
+          <header className="mb-10">
+            <h1 className="text-4xl sm:text-6xl font-black tracking-tighter text-slate-900 leading-none mb-4">
+              Elegí un profesional
+            </h1>
+            <p className="text-slate-500 text-lg">
+              Para{" "}
+              <span className="font-bold text-slate-900">{service.name}</span> (
+              {service.duration} min)
+            </p>
+          </header>
+        </AnimateOnScroll>
 
-      {experts.length === 0 ? (
-        <EmptyState
-          title="Sin profesionales disponibles"
-          description="No hay profesionales que ofrezcan este servicio."
-        />
-      ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {experts.map((e) => {
-            const isSelected = state.expertId === e.id;
-            return (
-              <Link
-                key={e.id}
-                to={`/${slug}/fecha`}
-                onClick={() => setExpert(e.id)}
-                className="group"
-              >
+        {experts.length === 0 ? (
+          <div className="text-center py-20 text-slate-500">
+            No hay profesionales disponibles para este servicio en este momento.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            {experts.map((expert, index) => (
+              <AnimateOnScroll key={expert.id} delay={index * 100}>
                 <Card
-                  className={`p-4 flex items-start gap-4 transition h-full
-                    ${
-                      isSelected
-                        ? "border-brand ring-2 ring-brand/20"
-                        : "hover:border-slate-200 hover:shadow-md"
-                    }
-                  `}
+                  className="card-hover bg-white border border-slate-200 rounded-3xl p-6 flex items-center gap-6 cursor-pointer"
+                  onClick={() => handleSelectExpert(expert)}
                 >
-                  <img
-                    src={e.avatar}
-                    alt={e.name}
-                    className="w-12 h-12 rounded-full object-cover ring-1 ring-slate-200 shrink-0"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-slate-900 truncate">
-                      {e.name}
-                    </h3>
-                    {e.bio && (
-                      <p className="text-xs text-slate-500 mt-1 line-clamp-2">
-                        {e.bio}
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-slate-100 flex items-center justify-center shrink-0 overflow-hidden border-2 border-slate-200">
+                    {expert.imageUrl ? (
+                      <img
+                        src={expert.imageUrl}
+                        alt={expert.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-3xl font-black text-slate-300">
+                        {expert.name.charAt(0)}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex-1">
+                    <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-1">
+                      {expert.name}
+                    </h2>
+                    {expert.description && (
+                      <p className="text-sm text-slate-500 line-clamp-2">
+                        {expert.description}
                       </p>
                     )}
                   </div>
-                  <ChevronRight
-                    size={18}
-                    className="text-slate-400 group-hover:text-slate-700 transition shrink-0 mt-1"
-                  />
                 </Card>
-              </Link>
-            );
-          })}
-        </div>
-      )}
+              </AnimateOnScroll>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
